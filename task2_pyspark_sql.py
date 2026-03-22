@@ -14,10 +14,12 @@ def get_spark_session():
         .getOrCreate()
 
 def load_data(spark):
+    start_time = time.time()
     print(f"Loading data from {config.DATA_PATH} using Spark SQL...")
     df = spark.read.csv(config.DATA_PATH, header=True, inferSchema=True)
     df = df.select("OFNS_DESC", "BORO_NM", "JURIS_DESC", "PREM_TYP_DESC", "VIC_AGE_GROUP")
-    print("Data loaded.")
+    end_time = time.time()
+    print("Data loaded in {:.4f} seconds.".format(end_time - start_time))
     return df
 
 def query_1(df):
@@ -36,15 +38,26 @@ def query_1(df):
 def query_2(df):
     print("\nExecuting Query 2: 3 most frequently reported complaints in each borough...")
     start_time = time.time()
-    boroughs = df.groupBy("BORO_NM") \
-                .distinct() \
-                .filter(col("BORO_NM").isNotNull() and col("BORO_NM") != "" and col("BORO_NM") != "(null)") \
-                .collect()
+    df_clean = df.filter(
+        col("BORO_NM").isNotNull()
+        & (col("BORO_NM") != "")
+        & (col("BORO_NM") != "(null)")
+        & col("OFNS_DESC").isNotNull()
+        & (col("OFNS_DESC") != "")
+        & (col("OFNS_DESC") != "(null)")
+    )
+
+    boroughs = (
+        df_clean.select("BORO_NM")
+        .distinct()
+        .orderBy("BORO_NM")
+        .collect()
+    )
     
     complaints_by_borough: Dict[str, Any] = {}
-    for borough in boroughs.collect():
+    for borough in boroughs:
         boro_name = borough["BORO_NM"]
-        top_complaints = df.filter(col("BORO_NM") == boro_name) \
+        top_complaints = df_clean.filter(col("BORO_NM") == boro_name) \
                         .groupBy("OFNS_DESC") \
                         .count() \
                         .orderBy(desc("count")) \

@@ -6,7 +6,7 @@ import config
 from typing import Any, Dict
 import matplotlib.pyplot as plt
 
-DB_PATH = os.path.expanduser("~/home/jajes/studia/magisterka/I_sem/TiNPDW/complaints.db")
+DB_PATH = os.path.expanduser("~/studia/magisterka/I_sem/TiNPDW/complaints.db")
 
 def init_database():
     if os.path.exists(DB_PATH):

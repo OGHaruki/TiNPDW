@@ -19,13 +19,15 @@ def get_spark_context():
     return SparkContext(conf=conf)
 
 def get_data_rdd(sc):
+    start_time = time.time()
     print(f"Loading data from {config.DATA_PATH}...")
     rdd = sc.textFile(config.DATA_PATH)
     header = rdd.first()
     data_rdd = rdd.filter(lambda line: line != header) \
                   .map(parse_csv_line)
     
-    print("Data loaded.")
+    end_time = time.time()
+    print("Data loaded in {:.4f} seconds.".format(end_time - start_time))
     return data_rdd
 
 def query_1(data_rdd):
